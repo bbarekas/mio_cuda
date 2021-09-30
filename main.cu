@@ -1,7 +1,8 @@
 #include <iostream>
 #include <math.h>
 #include <chrono>
-#include <benchmark/benchmark.h>
+//#include <benchmark/benchmark.h>
+#include <cuda_profiler_api.h>
 
 // CUDA Kernel function to add the elements of two arrays on the GPU
 __global__
@@ -63,6 +64,8 @@ int cuda_main(void)
     float *x;
     float *y;
 
+    cudaProfilerStart();
+
     // Allocate Unified Memory – accessible from CPU or GPU
     cudaMallocManaged(&x, N*sizeof(float));
     cudaMallocManaged(&y, N*sizeof(float));
@@ -76,7 +79,7 @@ int cuda_main(void)
     auto start = std::chrono::high_resolution_clock::now();
 
     // Run kernel on 1M elements on the CPU
-    cuda_add<<<1, 1<<10>>>(N, x, y);
+    cuda_add<<<1, 1>>>(N, x, y);
 
     //auto finish = std::chrono::high_resolution_clock::now();
 
@@ -94,6 +97,9 @@ int cuda_main(void)
     // Free memory
     cudaFree(x);
     cudaFree(y);
+
+    cudaDeviceReset();
+    cudaProfilerStop();
 
     return 0;
 }
@@ -123,7 +129,7 @@ int main() {
     std::cout << "Hello, World!" << std::endl;
 
     // Native version
-    native_main();
+    //native_main();
 
     // CUDA version
     cuda_main();
