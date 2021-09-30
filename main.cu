@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include <chrono>
+#include <benchmark/benchmark.h>
 
 // CUDA Kernel function to add the elements of two arrays on the GPU
 __global__
@@ -75,13 +76,13 @@ int cuda_main(void)
     auto start = std::chrono::high_resolution_clock::now();
 
     // Run kernel on 1M elements on the CPU
-    //cuda_add<<<1, 1>>>(N, x, y);
-    cuda_add<<<1, 1024>>>(N, x, y);
+    cuda_add<<<1, 1<<10>>>(N, x, y);
 
-    auto finish = std::chrono::high_resolution_clock::now();
+    //auto finish = std::chrono::high_resolution_clock::now();
 
     // Wait for GPU to finish before accessing on host
     cudaDeviceSynchronize();
+    auto finish = std::chrono::high_resolution_clock::now();
 
     // Check for errors (all values should be 3.0f)
     float maxError = 0.0f;
@@ -99,19 +100,17 @@ int cuda_main(void)
 
 #if 0
 
-static void bench_singleT(benchmark::State &state) {
+static void bench_native_main(benchmark::State &state) {
     for (auto _ : state)
-        single_thread();
+        native_main();
 }
-//BENCHMARK(bench_singleT);
-BENCHMARK(bench_singleT)->UseRealTime()->Unit(benchmark::kMillisecond);
+BENCHMARK(bench_native_main)->UseRealTime()->Unit(benchmark::kMillisecond);
 
-static void bench_multiT_false(benchmark::State &state) {
+static void bench_cuda_main(benchmark::State &state) {
     for (auto _ : state)
-        multi_thread_false();
+        cuda_main();
 }
-//BENCHMARK(bench_multiT);
-BENCHMARK(bench_multiT_false)->UseRealTime()->Unit(benchmark::kMillisecond);
+BENCHMARK(bench_cuda_main)->UseRealTime()->Unit(benchmark::kMillisecond);
 
 
 // Run the benchmark
